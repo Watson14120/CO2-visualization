@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>全球主要国家人均CO₂排放量历史趋势</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body { 
+            font-family: Arial; 
+            padding: 30px; 
+            background: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #title { 
+            font-size: 22px; 
+            margin-bottom: 15px; 
+            font-weight: bold; 
+            text-align: center;
+        }
+        #controls { 
+            display: flex; 
+            gap: 12px; 
+            margin-bottom: 15px; 
+            align-items: center; 
+            justify-content: center;
+        }
+        #reset { padding: 6px 12px; cursor: pointer; }
+        #countrySelect { padding: 6px 10px; font-size: 14px; }
+        #chart { 
+            width: 900px; 
+            height: 580px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+        }
+        .tooltip { position: absolute; background: white; padding: 6px; border: 1px solid #ccc; pointer-events: none; font-size: 12px; }
+        .legend { display: flex; gap: 20px; margin-top: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; }
+        .legend-dash { width: 14px; height: 2px; background: #666; display: inline-block; }
+        
+        /* 作业报告样式 */
+        #report {
+            width: 900px;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+            line-height: 1.6;
+        }
+        #report h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        #report h3 {
+            margin-top: 18px;
+            margin-bottom: 8px;
+            color: #444;
+        }
+        #report p {
+            margin-bottom: 8px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="title">全球主要国家人均CO₂排放量历史趋势</div>
+    <div id="controls">
+        <button id="reset">重置视图</button>
+        <select id="countrySelect">
+            <option value="all">所有国家</option>
+            <option value="China">中国</option>
+            <option value="USA">美国</option>
+            <option value="Japan">日本</option>
+            <option value="Germany">德国</option>
+            <option value="UK">英国</option>
+        </select>
+    </div>
+    <div id="chart"></div>
+    <div id="legend" class="legend"></div>
+
+    <!-- 作业报告 -->
+    <div id="report">
+        <h2>课程作业2：交互式可视化 说明文档</h2>
+
+        <h3>1. 可视化研究问题</h3>
+        <p>本可视化项目旨在探索：1990–2018 年间，全球主要发达国家与中国的人均 CO₂ 排放趋势变化特征，分析全球平均排放水平，对比各国排放差异，并探讨不同国家在气候变化中应承担的历史责任。</p>
+
+        <h3>2. 设计决策依据</h3>
+        <h4>（1）可视化编码选择</h4>
+        <p>X 轴：年份（1990–2018），时间序列数据适合使用线性坐标轴展示长期变化趋势。</p>
+        <p>Y 轴：人均 CO₂ 排放量（吨/人），数值型数据适合使用线性比例尺进行大小比较。</p>
+        <p>图表类型：折线图 + 离散数据点，既能清晰展示时间趋势，也能准确查看逐年数据。</p>
+        <p>颜色映射：中国（红色）、美国（蓝色）、日本（绿色）、德国（橙色）、英国（紫色），全球平均水平使用灰色虚线作为统一对比基准。</p>
+
+        <h4>（2）交互技术选择</h4>
+        <p>缩放与平移：支持查看局部年份区间的细节变化。</p>
+        <p>国家切换下拉框：支持单独查看某一国家的排放趋势。</p>
+        <p>悬浮提示（Tooltip）：鼠标悬浮时显示精确年份与数值。</p>
+        <p>动态图例：在全局视图下展示颜色与国家对应关系，提升可读性。</p>
+
+        <h4>（3）替代方案与最终选择</h4>
+        <p>柱状图：更适合分类比较，不适合展示长期连续趋势，因此放弃。</p>
+        <p>多视图图表：内容范围过大，视觉分散，不符合作业“聚焦明确”的要求。</p>
+        <p>动态年份筛选：交互复杂度较高，不利于快速理解整体趋势，因此未采用。</p>
+        <p>最终选择：单折线图 + 多层轻量交互，简洁、高效、易懂。</p>
+
+        <h3>3. 外部资源引用</h3>
+        <p>数据源：World Bank Open Data (1990–2018)</p>
+        <p>指标：EN.ATM.CO2E.PC（人均二氧化碳排放量）</p>
+        <p>技术工具：D3.js v7、HTML、CSS、JavaScript、GitHub Pages</p>
+
+        <h3>4. 开发流程概述</h3>
+        <p>总耗时：约 6 工时</p>
+        <p>耗时最多环节：</p>
+        <p>1. 真实数据清洗、整理与格式统一</p>
+        <p>2. D3 缩放交互与边界裁剪调试</p>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        const width = 900;
+        const height = 580;
+        const margin = { top: 30, right: 120, bottom: 60, left: 70 };
+
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        const w = width - margin.left - margin.right;
+        const h = height - margin.top - margin.bottom;
+
+        const countryConfig = [
+            { key: "China", name: "中国", color: "red" },
+            { key: "USA", name: "美国", color: "blue" },
+            { key: "Japan", name: "日本", color: "green" },
+            { key: "Germany", name: "德国", color: "orange" },
+            { key: "UK", name: "英国", color: "purple" }
+        ];
+        const allCountries = countryConfig.map(d => d.key);
+        const countryColorMap = Object.fromEntries(countryConfig.map(d => [d.key, d.color]));
+        const countryNameMap = Object.fromEntries(countryConfig.map(d => [d.key, d.name]));
+
+        const xScale = d3.scaleLinear()
+            .domain([1990, 2018])
+            .range([0, w]);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, 22])
+            .range([h, 0]);
+
+        const xAxis = d3.axisBottom(xScale).ticks(10).tickSizeOuter(0);
+        const yAxis = d3.axisLeft(yScale).tickSizeOuter(0);
+
+        const xg = g.append("g").attr("transform", `translate(0,${h})`).call(xAxis);
+        const yg = g.append("g").call(yAxis);
+
+        g.append("text").attr("x", w / 2).attr("y", h + 40).style("text-anchor", "middle").text("年份");
+        g.append("text").attr("transform", "rotate(-90)").attr("y", -margin.left + 20).attr("x", -h / 2).style("text-anchor", "middle").text("人均排放(吨/人)");
+
+        g.append("defs")
+            .append("clipPath")
+            .attr("id", "chartClip")
+            .append("rect")
+            .attr("x", 0).attr("y", 0).attr("width", w).attr("height", h);
+
+        const chartGroup = g.append("g").attr("clip-path", "url(#chartClip)");
+        const legendContainer = d3.select("#legend");
+
+        function updateChart(selectedCountry, currentXScale) {
+            chartGroup.selectAll("path, circle").remove();
+            legendContainer.selectAll("*").remove();
+
+            let showList = allCountries;
+            if (selectedCountry !== "all") showList = [selectedCountry];
+
+            showList.forEach(country => {
+                const color = countryColorMap[country];
+                const values = data.map(d => ({ year: d.year, value: d[country] }));
+                const line = d3.line().x(d => currentXScale(d.year)).y(d => yScale(d.value)).curve(d3.curveLinear);
+
+                chartGroup.append("path")
+                    .attr("d", line(values))
+                    .attr("stroke", color)
+                    .attr("stroke-width", 2)
+                    .attr("fill", "none");
+
+                chartGroup.selectAll(`.dot-${country}`)
+                    .data(values)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", d => currentXScale(d.year))
+                    .attr("cy", d => yScale(d.value))
+                    .attr("r", 4)
+                    .attr("fill", color)
+                    .on("mouseover", (e, d) => {
+                        tooltip.style("opacity", 1)
+                            .html(`${countryNameMap[country]}<br>年份: ${d.year}<br>人均: ${d.value}`)
+                            .style("left", (e.pageX + 10) + "px")
+                            .style("top", (e.pageY - 20) + "px");
+                    })
+                    .on("mouseout", () => tooltip.style("opacity", 0));
+            });
+
+            const globalValues = data.map(d => ({ year: d.year, value: d.Global }));
+            const globalLine = d3.line().x(d => currentXScale(d.year)).y(d => yScale(d.value));
+            
+            chartGroup.append("path")
+                .attr("d", globalLine(globalValues))
+                .attr("stroke", "#666")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5")
+                .attr("fill", "none");
+
+            if (selectedCountry === "all") {
+                countryConfig.forEach(config => {
+                    const item = legendContainer.append("div").attr("class", "legend-item");
+                    item.append("div").attr("class", "legend-color").style("background", config.color);
+                    item.append("span").text(config.name);
+                });
+                const globalLegend = legendContainer.append("div").attr("class", "legend-item");
+                globalLegend.append("div").attr("class", "legend-dash");
+                globalLegend.append("span").text("全球人均碳排放");
+            }
+        }
+
+        const zoom = d3.zoom()
+            .scaleExtent([1, 8])
+            .translateExtent([[0, 0], [w, h]])
+            .extent([[0, 0], [w, h]])
+            .on("zoom", (event) => {
+                const newX = event.transform.rescaleX(xScale);
+                const clampedDomain = [Math.max(newX.domain()[0], 1990), Math.min(newX.domain()[1], 2018)];
+                newX.domain(clampedDomain);
+                const tickCount = Math.min(10, Math.round((clampedDomain[1] - clampedDomain[0]) / 2));
+                xg.call(xAxis.scale(newX).ticks(tickCount));
+                updateChart(d3.select("#countrySelect").property("value"), newX);
+            });
+
+        svg.call(zoom);
+        updateChart("all", xScale);
+
+        d3.select("#reset").on("click", () => {
+            svg.transition().call(zoom.transform, d3.zoomIdentity);
+        });
+
+        d3.select("#countrySelect").on("change", function(){
+            updateChart(this.value, xScale);
+        });
+    </script>
+</body>
+</html>
